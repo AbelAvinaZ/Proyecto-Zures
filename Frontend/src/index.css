@@ -1,0 +1,12 @@
+@import "tailwindcss";
+
+@theme {
+  --font-display: "Montserrat", "sans-serif";
+  --color-milagrito-light: #7676d0;
+  --color-milagrito: #5454c4;
+  --color-milagrito-dark: #3c3c8b;
+}
+
+.birthday-event {
+  @apply font-bold;
+}
