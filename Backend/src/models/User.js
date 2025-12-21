@@ -60,16 +60,15 @@ const userSchema = new mongoose.Schema({
 }, { timestamps: true });
 
 // Hashear contraseña antes de guardar
-userSchema.pre("save", async function (next) {
-    if (!this.isModified("password")) return next();
+userSchema.pre("save", async function () {
+    if (!this.isModified("password")) return;
 
     try {
         const salt = await bcrypt.genSalt(10);
         this.password = await bcrypt.hash(this.password, salt);
-        next();
     } catch (error) {
         logger.error("Error al hashear contraseña", error);
-        next(error);
+        throw error;
     }
 });
 
@@ -79,7 +78,6 @@ userSchema.methods.comparePassword = async function (candidatePassword) {
 };
 
 // Índices para búsquedas frecuentes
-userSchema.index({ email: 1 });
 userSchema.index({ role: 1 });
 userSchema.index({ reportsTo: 1 });
 userSchema.index({ invitedBoards: 1 });

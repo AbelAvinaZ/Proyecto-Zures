@@ -3,6 +3,7 @@ import dotenv from "dotenv";
 import cors from "cors";
 import helmet from "helmet";
 import morgan from "morgan";
+import cookieParser from "cookie-parser";
 import rateLimit from "express-rate-limit";
 import connectDB from "./config/db.js";
 import setupAgenda from "./config/agenda.js";
@@ -18,6 +19,7 @@ const app = express();
 app.use(helmet());
 app.use(cors({ origin: process.env.FRONTEND_URL || "http://localhost:5173", credentials: true }));
 app.use(express.json());
+app.use(cookieParser());
 app.use(morgan("dev"));
 
 const limiter = rateLimit({
@@ -33,15 +35,21 @@ app.use("/api", routes);
 app.use(errorHandler);
 
 // Conectar DB y Agenda
-connectDB()
-    .then(() => setupAgenda())
-    .then(() => {
-        const PORT = process.env.PORT || 5000;
-        app.listen(PORT, () => {
-            logger.info(`Server corriendo en puerto ${PORT}`);
+if (process.env.NODE_ENV !== "test") {
+    connectDB()
+        .then(() => setupAgenda())
+        .then(() => {
+            const PORT = process.env.PORT || 5000;
+            app.listen(PORT, () => {
+                logger.info(`Server corriendo en puerto ${PORT}`);
+            });
+        })
+        .catch((err) => {
+            logger.error("Error al iniciar la aplicación", err);
+            process.exit(1);
         });
-    })
-    .catch((err) => {
-        logger.error("Error al iniciar la aplicación", err);
-        process.exit(1);
-    });
+}
+
+
+
+export default app;

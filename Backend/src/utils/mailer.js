@@ -15,10 +15,14 @@ const transporter = nodemailer.createTransport({
     },
 });
 
-const sendEmail = async ({ to, subject, text, html }) => {
+const sendEmail = async ({ to, bcc = [], subject, text, html }) => {
+    // Convertir to a array si es string
+    const recipients = Array.isArray(to) ? to : to.split(",").map((email) => email.trim());
+
     const mailOptions = {
         from: process.env.EMAIL_FROM || "no-reply@tuappseguridad.com",
-        to,
+        to: recipients,
+        bcc,
         subject,
         text,
         html,
@@ -27,13 +31,13 @@ const sendEmail = async ({ to, subject, text, html }) => {
     try {
         if (process.env.NODE_ENV === "production" && process.env.SENDGRID_API_KEY) {
             await sgMail.send(mailOptions);
-            logger.info(`Email enviado vía SendGrid a ${to} - Asunto: ${subject}`);
+            logger.info(`Email enviado vía SendGrid a [${recipients.join(", ")}] - Asunto: ${subject}`);
         } else {
             await transporter.sendMail(mailOptions);
-            logger.info(`Email enviado vía ${process.env.NODE_ENV === "production" ? "SMTP" : "Mailtrap"} a ${to} - Asunto: ${subject}`);
+            logger.info(`Email enviado vía ${process.env.NODE_ENV === "production" ? "SMTP" : "Mailtrap"} a [${recipients.join(", ")}] - Asunto: ${subject}`);
         }
     } catch (error) {
-        logger.error("Error al enviar email", { to, error: error.message });
+        logger.error("Error al enviar email", { recipients: recipients.join(", "), error: error.message });
         throw new Error("No se pudo enviar el correo");
     }
 };

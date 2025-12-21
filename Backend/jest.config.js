@@ -1,7 +1,15 @@
 export default {
-    testEnvironment: 'node',
-    transform: {
-        '^.+\\.js$': 'babel-jest' 
+    testEnvironment: "node",
+    setupFilesAfterEnv: [
+        "<rootDir>/tests/setupMocks.js",  // Mock primero
+        "<rootDir>/tests/setup.js",       // Luego DB
+    ],
+    testTimeout: 30000,
+    transform: {},
+    transformIgnorePatterns: [
+        "node_modules/(?!uuid|agenda|@sendgrid/mail/)"
+    ],
+    moduleNameMapper: {
+        "^(\\.{1,2}/.*)\\.js$": "$1",
     },
-    moduleFileExtensions: ['js'],
 };
