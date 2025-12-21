@@ -73,14 +73,23 @@ const verifyEmail = async (req, res) => {
             return res.status(400).json({ success: false, message: "Token inválido o expirado" });
         }
 
+        // CONTAR ANTES de marcar como verificado
+        const verifiedCountBefore = await User.countDocuments({ emailVerified: true });
+
         user.emailVerified = true;
         user.emailVerificationToken = undefined;
+
+        // Ahora sí: si antes no había ninguno verificado, este es el primero
+        if (verifiedCountBefore === 0) {
+            user.role = ROLES.MASTER;
+            logger.info(`Primer usuario verificado en la app: ${user.email} promovido automáticamente a MASTER`);
+        }
+
         await user.save();
 
-        logger.info(`Email verificado: ${user.email}`);
+        logger.info(`Email verificado: ${user.email} - Rol asignado: ${user.role}`);
 
-        // Redirigir al frontend con mensaje de éxito
-        res.redirect(`${process.env.FRONTEND_URL}/login?verified=true`);
+        res.redirect(`${process.env.FRONTEND_URL}/login?verified=true&role=${user.role}`);
     } catch (error) {
         logger.error("Error en verificación de email", error);
         res.status(500).json({ success: false, message: "Error al verificar email" });

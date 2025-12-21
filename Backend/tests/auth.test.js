@@ -1,6 +1,7 @@
 import request from "supertest";
 import app from "../src/index.js";
 import User from "../src/models/User.js";
+import { ROLES } from "../src/utils/constants.js";
 
 describe("Auth Endpoints", () => {
     beforeEach(async () => {
@@ -27,7 +28,6 @@ describe("Auth Endpoints", () => {
     });
 
     it("no debe permitir registro duplicado", async () => {
-        // Registrar primero
         await request(app)
             .post("/api/auth/register")
             .send({
@@ -36,7 +36,6 @@ describe("Auth Endpoints", () => {
                 password: "123456",
             });
 
-        // Intentar duplicado
         const res = await request(app)
             .post("/api/auth/register")
             .send({
@@ -51,7 +50,6 @@ describe("Auth Endpoints", () => {
     });
 
     it("debe verificar email con token válido", async () => {
-        // Registrar usuario
         await request(app)
             .post("/api/auth/register")
             .send({
@@ -65,7 +63,7 @@ describe("Auth Endpoints", () => {
 
         const res = await request(app).get(`/api/auth/verify-email?token=${token}`);
 
-        expect(res.status).toBe(302); // redirect
+        expect(res.status).toBe(302);
 
         const verifiedUser = await User.findOne({ email: "verify@example.com" });
         expect(verifiedUser.emailVerified).toBe(true);
@@ -73,7 +71,6 @@ describe("Auth Endpoints", () => {
     });
 
     it("debe hacer login exitoso", async () => {
-        // Registrar usuario
         await request(app)
             .post("/api/auth/register")
             .send({
@@ -82,7 +79,6 @@ describe("Auth Endpoints", () => {
                 password: "123456",
             });
 
-        // Verificar manualmente (para evitar dependencia del mail)
         const user = await User.findOne({ email: "login@example.com" });
         user.emailVerified = true;
         await user.save();
@@ -99,5 +95,56 @@ describe("Auth Endpoints", () => {
         expect(res.body.success).toBe(true);
         expect(res.body.data.user.email).toBe("login@example.com");
         expect(res.headers["set-cookie"]).toBeDefined();
+    });
+
+    it("el primer usuario verificado se convierte automáticamente en MASTER", async () => {
+        await User.deleteMany({});
+
+        await request(app)
+            .post("/api/auth/register")
+            .send({
+                name: "Primer Usuario",
+                email: "first@example.com",
+                password: "123456",
+            });
+
+        const user = await User.findOne({ email: "first@example.com" });
+        const token = user.emailVerificationToken;
+
+        await request(app).get(`/api/auth/verify-email?token=${token}`);
+
+        const verifiedUser = await User.findOne({ email: "first@example.com" });
+        expect(verifiedUser.role).toBe(ROLES.MASTER);
+    });
+
+    it("usuarios posteriores quedan como UNREGISTERED", async () => {
+        await User.deleteMany({});
+
+        // Primer usuario (será MASTER)
+        await request(app)
+            .post("/api/auth/register")
+            .send({
+                name: "Master",
+                email: "master2@example.com",
+                password: "123456",
+            });
+
+        let user = await User.findOne({ email: "master2@example.com" });
+        await request(app).get(`/api/auth/verify-email?token=${user.emailVerificationToken}`);
+
+        // Segundo usuario
+        await request(app)
+            .post("/api/auth/register")
+            .send({
+                name: "Segundo",
+                email: "second@example.com",
+                password: "123456",
+            });
+
+        user = await User.findOne({ email: "second@example.com" });
+        await request(app).get(`/api/auth/verify-email?token=${user.emailVerificationToken}`);
+
+        const secondUser = await User.findOne({ email: "second@example.com" });
+        expect(secondUser.role).toBe(ROLES.UNREGISTERED);
     });
 });
