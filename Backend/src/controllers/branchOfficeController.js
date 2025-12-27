@@ -12,26 +12,43 @@ const createBranchOffice = async (req, res) => {
         // Verificar que la branch padre exista
         const branch = await Branch.findById(branchId);
         if (!branch) {
-            return res.status(404).json({ success: false, message: "Branch no encontrada" });
+            return res.status(404).json({
+                success: false,
+                message: "Branch no encontrada"
+            });
         }
 
         // Solo MASTER o AREA_DIRECTOR pueden crear
         if (currentUser.role !== ROLES.MASTER && currentUser.role !== ROLES.AREA_DIRECTOR) {
-            return res.status(403).json({ success: false, message: "No tienes permiso para crear sucursales" });
+            return res.status(403).json({
+                success: false,
+                message: "No tienes permiso para crear sucursales"
+            });
         }
 
-        const existing = await BranchOffice.findOne({ code });
+        // Verificar si ya existe por código O por nombre (en la misma branch)
+        const existing = await BranchOffice.findOne({
+            $or: [
+                { code },
+                { name, branchId } // Mismo nombre en la misma branch
+            ]
+        });
+
         if (existing) {
-            return res.status(400).json({ success: false, message: "El código de sucursal ya existe" });
+            const field = existing.code === code ? "código" : "nombre";
+            return res.status(400).json({
+                success: false,
+                message: `El ${field} ya existe en esta branch`
+            });
         }
 
         const branchOffice = new BranchOffice({
             name,
             code,
             branchId,
-            address,
-            phone,
-            managerId,
+            address: address || undefined,
+            phone: phone || undefined,
+            managerId: managerId || undefined,
         });
 
         await branchOffice.save();
@@ -45,7 +62,19 @@ const createBranchOffice = async (req, res) => {
         });
     } catch (error) {
         logger.error("Error al crear sucursal específica", error);
-        res.status(500).json({ success: false, message: "Error al crear sucursal" });
+
+        // Manejar errores de MongoDB (duplicados, etc.)
+        if (error.code === 11000) {
+            return res.status(400).json({
+                success: false,
+                message: "El código o nombre de sucursal ya existe"
+            });
+        }
+
+        res.status(500).json({
+            success: false,
+            message: "Error al crear sucursal"
+        });
     }
 };
 

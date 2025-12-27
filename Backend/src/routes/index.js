@@ -3,6 +3,7 @@ import authRoutes from "./authRoutes.js";
 import userRoutes from "./userRoutes.js";
 import branchRoutes from "./branchRoutes.js";
 import branchOfficeRoutes from "./branchOfficeRoutes.js";
+import employeeRoutes from "./employeeRoutes.js";
 
 const router = express.Router();
 
@@ -14,5 +15,6 @@ router.use("/auth", authRoutes);
 router.use("/users", userRoutes);
 router.use("/branches", branchRoutes);
 router.use("/branch-offices", branchOfficeRoutes);
+router.use("/employees", employeeRoutes);
 
 export default router;
