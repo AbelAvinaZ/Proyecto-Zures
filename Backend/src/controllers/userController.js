@@ -126,7 +126,102 @@ const updateUserRole = async (req, res) => {
     }
 };
 
+// Ver perfil propio
+const getMyProfile = async (req, res) => {
+    const currentUser = req.user;
+
+    try {
+        const user = await User.findById(currentUser._id)
+            .select("name email role roleDisplay avatar department branchId isActive emailVerified createdAt");
+
+        if (!user) {
+            return res.status(404).json({ success: false, message: "Usuario no encontrado" });
+        }
+
+        res.json({
+            success: true,
+            message: "Perfil obtenido correctamente",
+            data: { user },
+        });
+    } catch (error) {
+        logger.error("Error al obtener perfil propio", error);
+        res.status(500).json({ success: false, message: "Error al obtener perfil" });
+    }
+};
+
+// Actualizar perfil propio (nombre, avatar, etc.)
+const updateMyProfile = async (req, res) => {
+    const { name, avatar } = req.body;
+    const currentUser = req.user;
+
+    try {
+        const user = await User.findById(currentUser._id);
+        if (!user) {
+            return res.status(404).json({ success: false, message: "Usuario no encontrado" });
+        }
+
+        if (name) user.name = name;
+        if (avatar) user.avatar = avatar; // URL de Cloudinary
+
+        await user.save();
+
+        logger.info(`Perfil actualizado por ${user.email}`);
+
+        res.json({
+            success: true,
+            message: "Perfil actualizado correctamente",
+            data: {
+                user: {
+                    id: user._id,
+                    name: user.name,
+                    email: user.email,
+                    role: user.role,
+                    roleDisplay: ROLE_DISPLAY[user.role],
+                    avatar: user.avatar,
+                },
+            },
+        });
+    } catch (error) {
+        logger.error("Error al actualizar perfil", error);
+        res.status(500).json({ success: false, message: "Error al actualizar perfil" });
+    }
+};
+
+// Cambiar contraseña (requiere contraseña actual)
+const changePassword = async (req, res) => {
+    const { currentPassword, newPassword } = req.body;
+    const currentUser = req.user;
+
+    try {
+        const user = await User.findById(currentUser._id);
+        if (!user) {
+            return res.status(404).json({ success: false, message: "Usuario no encontrado" });
+        }
+
+        const isMatch = await user.comparePassword(currentPassword);
+        if (!isMatch) {
+            return res.status(400).json({ success: false, message: "Contraseña actual incorrecta" });
+        }
+
+        user.password = newPassword; // El pre-save hook hasheará
+        await user.save();
+
+        logger.info(`Contraseña cambiada por ${user.email}`);
+
+        res.json({
+            success: true,
+            message: "Contraseña actualizada correctamente",
+        });
+    } catch (error) {
+        logger.error("Error al cambiar contraseña", error);
+        res.status(500).json({ success: false, message: "Error al cambiar contraseña" });
+    }
+};
+
 export default {
     getAllUsers,
     updateUserRole,
+    getMyProfile,
+    updateMyProfile,
+    changePassword,
 };

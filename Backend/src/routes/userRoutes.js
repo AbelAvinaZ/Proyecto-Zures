@@ -8,6 +8,11 @@ const router = express.Router();
 // Todos autenticados ven lista básica
 router.get("/", authMiddleware.authenticate, userController.getAllUsers);
 
+// Perfil propio (accesible por todos autenticados, incluido UNREGISTERED)
+router.get("/me", authMiddleware.authenticate, userController.getMyProfile);
+router.patch("/me", authMiddleware.authenticate, userController.updateMyProfile);
+router.patch("/me/password", authMiddleware.authenticate, userController.changePassword);
+
 // Solo MASTER y AREA_DIRECTOR pueden cambiar roles
 router.patch("/:userId/role",
     authMiddleware.authenticate,

@@ -161,4 +161,77 @@ describe("User Management Endpoints", () => {
             expect(res.status).toBe(403);
         });
     });
+
+    describe("Perfil propio", () => {
+        let testUser;
+        let userToken;
+
+        beforeEach(async () => {
+            testUser = await User.create({
+                name: "Test Profile",
+                email: "profile@test.com",
+                password: "123456",
+                role: ROLES.OPERATIONS,
+                emailVerified: true,
+            });
+
+            userToken = jwt.sign({ id: testUser._id, role: testUser.role }, process.env.JWT_SECRET);
+        });
+
+        it("puede ver su propio perfil", async () => {
+            const res = await request(app)
+                .get("/api/users/me")
+                .set("Cookie", [`jwt=${userToken}`]);
+
+            expect(res.status).toBe(200);
+            expect(res.body.success).toBe(true);
+            expect(res.body.data.user.name).toBe("Test Profile");
+        });
+
+        it("puede actualizar nombre y avatar", async () => {
+            const res = await request(app)
+                .patch("/api/users/me")
+                .set("Cookie", [`jwt=${userToken}`])
+                .send({
+                    name: "Nuevo Nombre",
+                    avatar: "https://cloudinary.com/avatar.jpg",
+                });
+
+            expect(res.status).toBe(200);
+            expect(res.body.success).toBe(true);
+            expect(res.body.data.user.name).toBe("Nuevo Nombre");
+        });
+
+        it("puede cambiar contraseña", async () => {
+            const res = await request(app)
+                .patch("/api/users/me/password")
+                .set("Cookie", [`jwt=${userToken}`])
+                .send({
+                    currentPassword: "123456",
+                    newPassword: "newpass123",
+                });
+
+            expect(res.status).toBe(200);
+            expect(res.body.success).toBe(true);
+        });
+
+        it("UNREGISTERED puede ver y editar su perfil", async () => {
+            const unregUser = await User.create({
+                name: "Unreg Test",
+                email: "unreg@test.com",
+                password: "123456",
+                role: ROLES.UNREGISTERED,
+                emailVerified: true,
+            });
+
+            const unregToken = jwt.sign({ id: unregUser._id, role: unregUser.role }, process.env.JWT_SECRET);
+
+            const res = await request(app)
+                .get("/api/users/me")
+                .set("Cookie", [`jwt=${unregToken}`]);
+
+            expect(res.status).toBe(200);
+            expect(res.body.data.user.name).toBe("Unreg Test");
+        });
+    });
 });

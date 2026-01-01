@@ -34,15 +34,15 @@ const authenticate = async (req, res, next) => {
 
         // Bloqueo estricto para UNREGISTERED: no permite NINGUNA ruta protegida excepto perfil propio
         if (user.role === ROLES.UNREGISTERED) {
-            const allowedUnregRoutes = [
-                "/users/me",                // Ver perfil propio
-                "/users/me/update",         // Actualizar perfil
-                "/users/me/password",       // Cambiar contraseña
-                "/users/me/avatar",         // Cambiar avatar
-                // Agrega aquí otras rutas específicas de perfil si las tienes
+            const allowedUnregPaths = [
+                "/me",                // Ver perfil propio
+                "/me/update",         // Actualizar perfil (si lo usas)
+                "/me/password",       // Cambiar contraseña
+                "/me/avatar",         // Cambiar avatar
+                // Agrega otras si las tienes, ej. "/me/avatar/upload"
             ];
 
-            const isAllowed = allowedUnregRoutes.some(route => req.path.startsWith(route));
+            const isAllowed = allowedUnregPaths.some(path => req.path.startsWith(path));
 
             if (!isAllowed) {
                 return res.status(403).json({

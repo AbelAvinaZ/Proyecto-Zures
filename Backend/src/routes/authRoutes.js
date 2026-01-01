@@ -10,7 +10,7 @@ router.post("/register", validate(authValidation.registerSchema), authController
 router.get("/verify-email", authController.verifyEmail);
 router.post("/login", validate(authValidation.loginSchema), authController.login);
 router.post("/logout", authController.logout);
-router.post("/forgot-password", validate(authValidation.forgotPasswordSchema), authMiddleware.allowUnregisteredForProfile, authController.forgotPassword);
+router.post("/forgot-password", validate(authValidation.forgotPasswordSchema), authController.forgotPassword);
 router.post("/reset-password/:token", validate(authValidation.resetPasswordSchema), authController.resetPassword);
 
 export default router;
