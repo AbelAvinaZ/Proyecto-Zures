@@ -5,6 +5,8 @@ import branchRoutes from "./branchRoutes.js";
 import branchOfficeRoutes from "./branchOfficeRoutes.js";
 import employeeRoutes from "./employeeRoutes.js";
 import jobPositionRoutes from "./jobPositionRoutes.js";
+import workspaceRoutes from "./workspaceRoutes.js";
+import boardRoutes from "./boardRoutes.js";
 
 const router = express.Router();
 
@@ -18,5 +20,7 @@ router.use("/branches", branchRoutes);
 router.use("/branch-offices", branchOfficeRoutes);
 router.use("/employees", employeeRoutes);
 router.use("/job-positions", jobPositionRoutes);
+router.use("/workspaces", workspaceRoutes);
+router.use("/boards", boardRoutes);
 
 export default router;
