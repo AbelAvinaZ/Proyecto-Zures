@@ -17,7 +17,7 @@ const app = express();
 
 // Middlewares globales
 app.use(helmet());
-app.use(cors({ origin: process.env.FRONTEND_URL || "http://localhost:5173", credentials: true }));
+app.use(cors({ origin: process.env.FRONTEND_URL || "http://localhost:5174", credentials: true }));
 app.use(express.json());
 app.use(cookieParser());
 app.use(morgan("dev"));
@@ -35,20 +35,27 @@ app.use("/api", routes);
 app.use(errorHandler);
 
 // Conectar DB y Agenda
-if (process.env.NODE_ENV !== "test") {
-    connectDB()
-        .then(() => setupAgenda())
-        .then(() => {
-            const PORT = process.env.PORT || 5000;
-            app.listen(PORT, () => {
-                logger.info(`Server corriendo en puerto ${PORT}`);
-            });
-        })
-        .catch((err) => {
-            logger.error("Error al iniciar la aplicación", err);
-            process.exit(1);
+const startServer = async () => {
+    try {
+        await connectDB();
+        logger.info("Base de datos conectada correctamente");
+
+        // Agenda en background (no bloquea)
+        setupAgenda()
+            .then(() => logger.info("Agenda iniciado en background"))
+            .catch(err => logger.error("Error al iniciar Agenda (no afecta servidor)", err));
+
+        const PORT = process.env.PORT || 5000;
+        app.listen(PORT, () => {
+            logger.info(`Server corriendo en puerto ${PORT}`);
         });
-}
+    } catch (err) {
+        logger.error("Error crítico al iniciar la aplicación", err);
+        process.exit(1);
+    }
+};
+
+startServer();
 
 
 

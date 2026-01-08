@@ -35,18 +35,18 @@ const register = async (req, res) => {
 
         await user.save();
 
-        const verificationUrl = `${process.env.FRONTEND_URL}/verify-email?token=${verificationToken}`;
+        const verificationUrl = `${process.env.FRONTEND_URL}/login?token=${verificationToken}`;
 
-        // await sendEmail({
-        //     to: email,
-        //     subject: "Verifica tu cuenta - App Seguridad",
-        //     html: `
-        //         <h2>Bienvenido, ${name}</h2>
-        //         <p>Para completar tu registro, haz clic en el siguiente enlace:</p>
-        //         <a href="${verificationUrl}">Verificar mi cuenta</a>
-        //         <p>Este enlace expira en 24 horas.</p>
-        //     `,
-        // });
+        await sendEmail({
+            to: email,
+            subject: "Verifica tu cuenta - App Seguridad",
+            html: `
+                <h2>Bienvenido, ${name}</h2>
+                <p>Para completar tu registro, haz clic en el siguiente enlace:</p>
+                <a href="${verificationUrl}">Verificar mi cuenta</a>
+                <p>Este enlace expira en 24 horas.</p>
+            `,
+        });
 
         logger.info(`Usuario registrado (pendiente verificación): ${email}`);
 
@@ -180,17 +180,17 @@ const forgotPassword = async (req, res) => {
 
         const resetUrl = `${process.env.FRONTEND_URL}/reset-password?token=${resetToken}`;
 
-        // await sendEmail({
-        //     to: email,
-        //     subject: "Recuperación de contraseña - App Seguridad",
-        //     html: `
-        //         <h2>¿Olvidaste tu contraseña?</h2>
-        //         <p>Haz clic en el siguiente enlace para restablecerla:</p>
-        //         <a href="${resetUrl}">Restablecer contraseña</a>
-        //         <p>Este enlace expira en 1 hora.</p>
-        //         <p>Si no solicitaste esto, ignora este correo.</p>
-        //     `,
-        // });
+        await sendEmail({
+            to: email,
+            subject: "Recuperación de contraseña - App Seguridad",
+            html: `
+                <h2>¿Olvidaste tu contraseña?</h2>
+                <p>Haz clic en el siguiente enlace para restablecerla:</p>
+                <a href="${resetUrl}">Restablecer contraseña</a>
+                <p>Este enlace expira en 1 hora.</p>
+                <p>Si no solicitaste esto, ignora este correo.</p>
+            `,
+        });
 
         logger.info(`Solicitud de reset de contraseña enviada a: ${email}`);
 
