@@ -6,6 +6,8 @@ import boardValidation from "../validations/boardValidation.js";
 
 const router = express.Router();
 
+router.get("/column-types", authMiddleware.authenticate, boardController.getColumnTypes);
+
 router.get("/workspace/:workspaceId", authMiddleware.authenticate, boardController.getBoardsByWorkspace);
 router.get("/:id", authMiddleware.authenticate, boardController.getBoardById);
 

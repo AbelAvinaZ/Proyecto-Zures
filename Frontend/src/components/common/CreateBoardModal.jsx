@@ -1,7 +1,7 @@
 import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import * as yup from "yup";
-import api from "../../utils/api";
+import boardActionsHooks from "../../hooks/useBoardActions";
 import { toast } from "react-toastify";
 
 const schema = yup.object({
@@ -20,18 +20,24 @@ const CreateBoardModal = ({ isOpen, onClose, workspaceId, onSuccess }) => {
     resolver: yupResolver(schema),
   });
 
-  const onSubmit = async (data) => {
-    try {
-      const res = await api.post("/boards", { ...data, workspaceId });
-      if (res.data.success) {
-        toast.success("Board creado");
-        onSuccess(res.data.data.board);
-        reset();
-        onClose();
-      }
-    } catch (err) {
-      toast.error(err.response?.data?.message || "Error al crear board");
-    }
+  const { useCreateBoard } = boardActionsHooks;
+  const createBoardMutation = useCreateBoard();
+
+  const onSubmit = (data) => {
+    createBoardMutation.mutate(
+      { ...data, workspaceId },
+      {
+        onSuccess: (board) => {
+          toast.success("Board creado");
+          onSuccess(board);
+          reset();
+          onClose();
+        },
+        onError: (err) => {
+          toast.error(err.response?.data?.message || "Error al crear board");
+        },
+      },
+    );
   };
 
   if (!isOpen) return null;

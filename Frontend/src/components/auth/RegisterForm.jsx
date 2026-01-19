@@ -3,7 +3,7 @@ import { yupResolver } from "@hookform/resolvers/yup";
 import * as yup from "yup";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
-import api from "../../utils/api";
+import authHooks from "../../hooks/useAuthActions";
 
 const schema = yup.object({
   name: yup
@@ -26,29 +26,25 @@ const RegisterForm = () => {
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm({
-    resolver: yupResolver(schema),
-  });
+  } = useForm({ resolver: yupResolver(schema) });
   const navigate = useNavigate();
+  const { useRegister } = authHooks;
+  const registerMutation = useRegister();
 
-  const onSubmit = async (data) => {
-    try {
-      const res = await api.post("/auth/register", {
-        name: data.name,
-        email: data.email,
-        password: data.password,
-      });
-
-      if (res.data.success) {
-        toast.success(
-          res.data.message || "Registro exitoso. Verifica tu correo."
-        );
-        navigate("/login");
-      }
-    } catch (err) {
-      const message = err.response?.data?.message || "Error al registrar";
-      toast.error(message);
-    }
+  const onSubmit = (data) => {
+    registerMutation.mutate(
+      { name: data.name, email: data.email, password: data.password },
+      {
+        onSuccess: () => {
+          toast.success("Registro exitoso. Verifica tu correo.");
+          navigate("/login");
+        },
+        onError: (err) => {
+          const message = err.response?.data?.message || "Error al registrar";
+          toast.error(message);
+        },
+      },
+    );
   };
 
   return (

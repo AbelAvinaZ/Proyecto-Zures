@@ -1,12 +1,14 @@
 import { useLocation, useNavigate } from "react-router-dom";
 import { useEffect } from "react";
 import { toast } from "react-toastify";
-import api from "../utils/api";
+import authHooks from "../hooks/useAuthActions";
 import LoginForm from "../components/auth/LoginForm";
 
 const LoginPage = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const { useVerifyEmail } = authHooks;
+  const verifyMutation = useVerifyEmail();
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
@@ -15,21 +17,18 @@ const LoginPage = () => {
     const token = params.get("token");
 
     if (token) {
-      // Si viene token directo, lo verificamos con el backend
-      const verify = async () => {
-        try {
-          await api.get(`/auth/verify-email?token=${token}`);
+      verifyMutation.mutate(token, {
+        onSuccess: () => {
           toast.success(
-            "¡Correo verificado correctamente! Ahora puedes iniciar sesión."
+            "¡Correo verificado correctamente! Ahora puedes iniciar sesión.",
           );
           navigate("/login?verified=true", { replace: true });
-        } catch (err) {
-          console.error(err);
+        },
+        onError: () => {
           toast.error("Token inválido o expirado");
           navigate("/login", { replace: true });
-        }
-      };
-      verify();
+        },
+      });
       return;
     }
 
@@ -39,16 +38,16 @@ const LoginPage = () => {
         {
           position: "top-center",
           autoClose: 5000,
-        }
+        },
       );
 
       if (role === "MASTER") {
         toast.info(
-          "¡Felicidades! Eres el primer usuario verificado y has sido promovido a MASTER."
+          "¡Felicidades! Eres el primer usuario verificado y has sido promovido a MASTER.",
         );
       }
     }
-  }, [location, navigate]);
+  }, [location, navigate, verifyMutation]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100">

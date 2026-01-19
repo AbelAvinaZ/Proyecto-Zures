@@ -4,7 +4,7 @@ import * as yup from "yup";
 import { useNavigate } from "react-router-dom";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import api from "../../utils/api";
+import authHooks from "../../hooks/useAuthActions";
 import useAuth from "../../hooks/useAuth";
 
 const schema = yup.object({
@@ -23,7 +23,9 @@ const LoginForm = () => {
     formState: { errors },
     setValue,
   } = useForm({ resolver: yupResolver(schema) });
-  const { setUser, setError, rememberedEmail, setRememberedEmail } = useAuth();
+  const { setError, rememberedEmail } = useAuth();
+  const { useLogin } = authHooks;
+  const loginMutation = useLogin();
   const navigate = useNavigate();
 
   // Recordar email si existe
@@ -32,22 +34,19 @@ const LoginForm = () => {
     setValue("rememberMe", true);
   }
 
-  const onSubmit = async (data) => {
-    try {
-      const res = await api.post("/auth/login", data);
-      if (res.data.success) {
-        setUser(res.data.data.user, res.data.token, data.rememberMe);
-        if (data.rememberMe) {
-          setRememberedEmail(data.email);
-        }
+  const onSubmit = (data) => {
+    loginMutation.mutate(data, {
+      onSuccess: () => {
         toast.success("Login exitoso");
         navigate("/dashboard");
-      }
-    } catch (err) {
-      const message = err.response?.data?.message || "Error al iniciar sesión";
-      setError(message);
-      toast.error(message);
-    }
+      },
+      onError: (err) => {
+        const message =
+          err.response?.data?.message || "Error al iniciar sesión";
+        setError(message);
+        toast.error(message);
+      },
+    });
   };
 
   return (

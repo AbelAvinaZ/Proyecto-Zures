@@ -265,16 +265,16 @@ const inviteUserToBoard = async (req, res) => {
         // Email
         const inviteUrl = `${process.env.FRONTEND_URL}/boards/${id}`;
 
-        // await sendEmail({
-        //     to: invitedUser.email,
-        //     subject: `Invitación al board "${board.name}"`,
-        //     html: `
-        //         <h2>Invitación a board</h2>
-        //         <p>${currentUser.name} te ha invitado al board <strong>${board.name}</strong>.</p>
-        //         <a href="${inviteUrl}">Acceder al board</a>
-        //         <p>Si no esperabas esta invitación, ignórala.</p>
-        //     `,
-        // });
+        await sendEmail({
+            to: invitedUser.email,
+            subject: `Invitación al board "${board.name}"`,
+            html: `
+                <h2>Invitación a board</h2>
+                <p>${currentUser.name} te ha invitado al board <strong>${board.name}</strong>.</p>
+                <a href="${inviteUrl}">Acceder al board</a>
+                <p>Si no esperabas esta invitación, ignórala.</p>
+            `,
+        });
 
         logger.info(`Usuario ${invitedUser.email} invitado al board ${board.name} por ${currentUser.email}`);
 
@@ -556,6 +556,19 @@ const removeChart = async (req, res) => {
     }
 };
 
+// Obtener tipos de columnas
+const getColumnTypes = async (req, res) => {
+    try {
+        res.json({
+            success: true,
+            data: { columnTypes },
+        });
+    } catch (error) {
+        logger.error("Error al obtener tipos de columnas", error);
+        res.status(500).json({ success: false, message: "Error interno" });
+    }
+};
+
 export default {
     createBoard,
     getBoardsByWorkspace,
@@ -569,4 +582,5 @@ export default {
     updateItemCell,
     addChart,
     removeChart,
+    getColumnTypes,
 };

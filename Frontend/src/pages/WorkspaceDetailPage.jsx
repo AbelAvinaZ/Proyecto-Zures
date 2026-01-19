@@ -1,37 +1,27 @@
-import { useParams, useNavigate } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
-import api from "../utils/api";
-import { toast } from "react-toastify";
-import CreateBoardModal from "../components/common/CreateBoardModal";
 import { useState } from "react";
-
-const fetchWorkspace = async (workspaceId) => {
-  const res = await api.get(`/workspaces/${workspaceId}`);
-  return res.data.data.workspace;
-};
+import { useParams, useNavigate } from "react-router-dom";
+import workspaceActionsHooks from "../hooks/useWorkspaceActions";
+import CreateBoardModal from "../components/common/CreateBoardModal";
 
 const WorkspaceDetailPage = () => {
   const { workspaceId } = useParams();
   const navigate = useNavigate();
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
-  const {
-    data: workspace,
-    isLoading,
-    error,
-    refetch,
-  } = useQuery({
-    queryKey: ["workspace", workspaceId],
-    queryFn: () => fetchWorkspace(workspaceId),
-    enabled: !!workspaceId,
-  });
+  const { useWorkspace } = workspaceActionsHooks;
+  const { data: workspace, isLoading, error } = useWorkspace(workspaceId);
 
   if (isLoading) return <div>Cargando workspace...</div>;
   if (error) return <div>Error: {error.message}</div>;
 
   const handleCreateBoard = () => {
-    refetch();
-    toast.success("Board creado");
+    // Aquí puedes abrir el modal de board
+    setIsCreateModalOpen(true);
+  };
+
+  const onBoardCreated = (newBoard) => {
+    // Refetch o redirigir
+    navigate(`/boards/${newBoard._id}`);
   };
 
   return (
@@ -45,13 +35,14 @@ const WorkspaceDetailPage = () => {
         <div className="flex justify-between items-center mb-8">
           <h2 className="text-2xl font-semibold">Boards</h2>
           <button
-            onClick={() => setIsCreateModalOpen(true)}
+            onClick={handleCreateBoard}
             className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
           >
             + Crear Board
           </button>
         </div>
 
+        {/* Lista de boards */}
         {workspace.boards.length === 0 ? (
           <div className="text-center py-12 bg-white rounded-lg shadow">
             <p className="text-xl text-gray-600">No hay boards aún</p>
@@ -84,7 +75,7 @@ const WorkspaceDetailPage = () => {
         isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
         workspaceId={workspaceId}
-        onSuccess={handleCreateBoard}
+        onSuccess={onBoardCreated}
       />
     </div>
   );

@@ -1,63 +1,70 @@
-import { useParams, useNavigate } from "react-router-dom";
-import useBoard from "../hooks/useBoard";
+// src/pages/BoardDetailPage.js
+import { useState } from "react";
+import { useParams } from "react-router-dom";
+import boardHooks from "../hooks/useBoard";
 import BoardHeader from "../components/board/BoardHeader";
 import ItemsTable from "../components/board/ItemsTable";
+import AddColumnModal from "../components/board/AddColumnModal";
 import { toast } from "react-toastify";
-import api from "../utils/api";
 
 const BoardDetailPage = () => {
   const { boardId } = useParams();
-  const navigate = useNavigate();
-  const { data: board, isLoading, error, refetch } = useBoard(boardId);
+  const { useBoard, useAddColumn, useCreateItem, useUpdateItemCell } =
+    boardHooks;
+
+  const { data: board, isLoading, error } = useBoard(boardId);
+  const addColumnMutation = useAddColumn(boardId);
+  const createItemMutation = useCreateItem(boardId);
+  const updateCellMutation = useUpdateItemCell(boardId);
+
+  const [showAddColumn, setShowAddColumn] = useState(false);
 
   if (isLoading)
-    return <div className="text-center p-8 text-lg">Cargando board...</div>;
-  if (error) {
-    toast.error("Board no encontrado o sin permiso");
-    navigate("/dashboard"); // O al workspace padre
-    return null;
-  }
-  if (!board)
-    return <div className="text-center p-8">Este board no existe</div>;
+    return <div className="text-center p-8">Cargando board...</div>;
+  if (error)
+    return (
+      <div className="text-center p-8 text-red-500">Error: {error.message}</div>
+    );
 
-  const handleUpdateCell = async (itemIndex, columnIndex, value) => {
-    try {
-      await api.patch(
-        `/boards/${boardId}/items/${itemIndex}/columns/${columnIndex}`,
-        { value }
-      );
-      refetch();
-      toast.success("Celda actualizada");
-    } catch (err) {
-      console.error(err);
-      toast.error("Error al actualizar");
-    }
+  const handleAddColumn = (columnData) => {
+    addColumnMutation.mutate(columnData, {
+      onSuccess: () => {
+        toast.success("Columna agregada");
+        setShowAddColumn(false);
+      },
+    });
+  };
+
+  const handleCreateItem = () => {
+    createItemMutation.mutate(
+      {},
+      {
+        onSuccess: () => toast.success("Item creado"),
+      },
+    );
+  };
+
+  const handleUpdateCell = (itemIndex, columnIndex, value) => {
+    updateCellMutation.mutate({ itemIndex, columnIndex, value });
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 p-6 md:p-8">
+    <div className="min-h-screen bg-gray-100 p-8">
       <BoardHeader
         board={board}
-        onAddColumn={() =>
-          toast.info("Funcionalidad de agregar columna en desarrollo")
-        }
-        onAddItem={() =>
-          toast.info("Funcionalidad de agregar item en desarrollo")
-        }
+        onAddColumn={() => setShowAddColumn(true)}
+        onAddItem={handleCreateItem}
       />
 
-      <div className="mt-6">
-        <h2 className="text-xl font-semibold mb-4">Items</h2>
-        <ItemsTable board={board} onUpdateCell={handleUpdateCell} />
-      </div>
+      <ItemsTable board={board} onUpdateCell={handleUpdateCell} />
 
-      {/* Botón para volver al workspace */}
-      <button
-        onClick={() => navigate(`/workspaces/${board.workspaceId}`)}
-        className="mt-8 px-6 py-3 bg-gray-600 text-white rounded hover:bg-gray-700"
-      >
-        ← Volver al workspace
-      </button>
+      {showAddColumn && (
+        <AddColumnModal
+          isOpen={showAddColumn}
+          onClose={() => setShowAddColumn(false)}
+          onSubmit={handleAddColumn}
+        />
+      )}
     </div>
   );
 };

@@ -1,10 +1,9 @@
 import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import * as yup from "yup";
-import api from "../../utils/api";
+import authHooks from "../../hooks/useAuthActions";
 import useAuth from "../../hooks/useAuth";
 import { toast } from "react-toastify";
-import Cookies from "js-cookie";
 
 const schema = yup.object({
   name: yup.string().min(2, "Nombre mínimo 2 caracteres").optional(),
@@ -21,6 +20,10 @@ const schema = yup.object({
 
 const ProfileEditForm = () => {
   const { user, setUser } = useAuth();
+  const { useUpdateProfile, useChangePassword } = authHooks;
+  const updateProfileMutation = useUpdateProfile();
+  const changePasswordMutation = useChangePassword();
+
   const {
     register,
     handleSubmit,
@@ -30,15 +33,39 @@ const ProfileEditForm = () => {
     defaultValues: { name: user.name, avatar: user.avatar },
   });
 
-  const onSubmit = async (data) => {
-    try {
-      const res = await api.patch("/users/me", data);
-      if (res.data.success) {
-        setUser(res.data.data.user, res.data.token || Cookies.get("jwt"));
-        toast.success("Perfil actualizado");
-      }
-    } catch (err) {
-      toast.error(err.response?.data?.message || "Error al actualizar");
+  const onSubmit = (data) => {
+    // Primero actualiza perfil (nombre/avatar)
+    if (data.name || data.avatar) {
+      updateProfileMutation.mutate(
+        { name: data.name, avatar: data.avatar },
+        {
+          onSuccess: (res) => {
+            setUser(res.data.user);
+            toast.success("Perfil actualizado");
+          },
+          onError: (err) =>
+            toast.error(
+              err.response?.data?.message || "Error al actualizar perfil",
+            ),
+        },
+      );
+    }
+
+    // Si hay cambio de contraseña
+    if (data.newPassword) {
+      changePasswordMutation.mutate(
+        {
+          currentPassword: data.currentPassword,
+          newPassword: data.newPassword,
+        },
+        {
+          onSuccess: () => toast.success("Contraseña cambiada"),
+          onError: (err) =>
+            toast.error(
+              err.response?.data?.message || "Error al cambiar contraseña",
+            ),
+        },
+      );
     }
   };
 
