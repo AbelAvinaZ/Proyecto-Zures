@@ -11,19 +11,19 @@ import {
     changeMyPassword,
 } from '../api';
 
-export const useRegister = () => {
+const useRegister = () => {
     return useMutation({
         mutationFn: registerUser,
     });
 };
 
-export const useVerifyEmail = () => {
+const useVerifyEmail = () => {
     return useMutation({
         mutationFn: verifyEmailToken,
     });
 };
 
-export const useLogin = () => {
+const useLogin = () => {
     const { setUser, setRememberedEmail } = useAuthStore();
     return useMutation({
         mutationFn: loginUser,
@@ -36,7 +36,7 @@ export const useLogin = () => {
     });
 };
 
-export const useLogout = () => {
+const useLogout = () => {
     const { logout } = useAuthStore();
     return useMutation({
         mutationFn: logoutUser,
@@ -44,19 +44,19 @@ export const useLogout = () => {
     });
 };
 
-export const useForgotPassword = () => {
+const useForgotPassword = () => {
     return useMutation({
         mutationFn: forgotPassword,
     });
 };
 
-export const useResetPassword = () => {
+const useResetPassword = () => {
     return useMutation({
         mutationFn: ({ token, data }) => resetPassword(token, data),
     });
 };
 
-export const useUpdateProfile = () => {
+const useUpdateProfile = () => {
     const { setUser } = useAuthStore();
     return useMutation({
         mutationFn: updateMyProfile,
@@ -64,7 +64,7 @@ export const useUpdateProfile = () => {
     });
 };
 
-export const useChangePassword = () => {
+const useChangePassword = () => {
     return useMutation({
         mutationFn: changeMyPassword,
     });

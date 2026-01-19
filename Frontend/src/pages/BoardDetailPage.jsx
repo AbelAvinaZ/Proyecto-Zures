@@ -1,4 +1,3 @@
-// src/pages/BoardDetailPage.js
 import { useState } from "react";
 import { useParams } from "react-router-dom";
 import boardHooks from "../hooks/useBoard";
@@ -6,18 +5,20 @@ import BoardHeader from "../components/board/BoardHeader";
 import ItemsTable from "../components/board/ItemsTable";
 import AddColumnModal from "../components/board/AddColumnModal";
 import { toast } from "react-toastify";
+import AddItemModal from "../components/board/AddItemModal";
 
 const BoardDetailPage = () => {
   const { boardId } = useParams();
   const { useBoard, useAddColumn, useCreateItem, useUpdateItemCell } =
     boardHooks;
 
-  const { data: board, isLoading, error } = useBoard(boardId);
+  const { data: board, isLoading, error, refetch } = useBoard(boardId);
   const addColumnMutation = useAddColumn(boardId);
   const createItemMutation = useCreateItem(boardId);
   const updateCellMutation = useUpdateItemCell(boardId);
 
   const [showAddColumn, setShowAddColumn] = useState(false);
+  const [showAddItem, setShowAddItem] = useState(false);
 
   if (isLoading)
     return <div className="text-center p-8">Cargando board...</div>;
@@ -35,17 +36,22 @@ const BoardDetailPage = () => {
     });
   };
 
-  const handleCreateItem = () => {
-    createItemMutation.mutate(
-      {},
-      {
-        onSuccess: () => toast.success("Item creado"),
-      },
-    );
-  };
-
   const handleUpdateCell = (itemIndex, columnIndex, value) => {
     updateCellMutation.mutate({ itemIndex, columnIndex, value });
+  };
+
+  const handleAddItem = (values) => {
+    createItemMutation.mutate(values, {
+      onSuccess: () => {
+        toast.success("Item agregado correctamente");
+        refetch();
+        setShowAddItem(false);
+      },
+      onError: (err) => {
+        console.error(err);
+        toast.error("Error al agregar item");
+      },
+    });
   };
 
   return (
@@ -53,7 +59,7 @@ const BoardDetailPage = () => {
       <BoardHeader
         board={board}
         onAddColumn={() => setShowAddColumn(true)}
-        onAddItem={handleCreateItem}
+        onAddItem={() => setShowAddItem(true)}
       />
 
       <ItemsTable board={board} onUpdateCell={handleUpdateCell} />
@@ -63,6 +69,15 @@ const BoardDetailPage = () => {
           isOpen={showAddColumn}
           onClose={() => setShowAddColumn(false)}
           onSubmit={handleAddColumn}
+        />
+      )}
+
+      {showAddItem && (
+        <AddItemModal
+          isOpen={showAddItem}
+          onClose={() => setShowAddItem(false)}
+          board={board}
+          onSuccess={handleAddItem}
         />
       )}
     </div>

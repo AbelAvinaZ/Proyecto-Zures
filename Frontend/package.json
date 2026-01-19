@@ -26,10 +26,12 @@
     "jspdf": "^3.0.4",
     "react": "^19.2.0",
     "react-chartjs-2": "^5.3.1",
+    "react-datepicker": "^9.1.0",
     "react-dom": "^19.2.0",
     "react-hook-form": "^7.69.0",
     "react-paginate": "^8.3.0",
     "react-router-dom": "^7.11.0",
+    "react-select": "^5.10.2",
     "react-toastify": "^11.0.5",
     "yup": "^1.7.1",
     "zustand": "^5.0.9"

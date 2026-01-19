@@ -81,7 +81,7 @@ const useCreateItem = (boardId) => {
     });
 };
 
-export const useUpdateItemCell = (boardId) => {
+const useUpdateItemCell = (boardId) => {
     const queryClient = useQueryClient();
     return useMutation({
         mutationFn: ({ itemIndex, columnIndex, value }) =>
