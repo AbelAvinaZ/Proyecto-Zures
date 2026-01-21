@@ -2,27 +2,50 @@ import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import * as yup from "yup";
 import useColumnTypes from "../../hooks/useColumnTypes";
+import { useState } from "react";
 
-const schema = yup.object({
+const baseSchema = yup.object({
   name: yup
     .string()
     .min(2, "Nombre mínimo 2 caracteres")
     .required("Nombre obligatorio"),
   type: yup.string().required("Tipo obligatorio"),
   order: yup.number().positive().integer().optional(),
-  // config según tipo se puede agregar después (más avanzado)
 });
 
 const AddColumnModal = ({ isOpen, onClose, onSubmit }) => {
   const { data: columnTypes = [], isLoading } = useColumnTypes();
+  const [optionsInput, setOptionsInput] = useState("");
 
   const {
     register,
     handleSubmit,
     formState: { errors },
+    watch,
+    reset,
   } = useForm({
-    resolver: yupResolver(schema),
+    resolver: yupResolver(baseSchema),
   });
+
+  const selectedType = watch("type");
+
+  const onFormSubmit = (data) => {
+    let finalData = { ...data };
+
+    // Si es SELECT y hay opciones escritas
+    if (selectedType === "SELECT" && optionsInput.trim()) {
+      const optionsArray = optionsInput
+        .split(",")
+        .map((opt) => opt.trim())
+        .filter((opt) => opt.length > 0);
+
+      finalData.config = { options: optionsArray };
+    }
+
+    onSubmit(finalData);
+    reset();
+    setOptionsInput("");
+  };
 
   if (!isOpen) return null;
 
@@ -41,7 +64,7 @@ const AddColumnModal = ({ isOpen, onClose, onSubmit }) => {
       <div className="bg-white p-8 rounded-lg shadow-xl max-w-md w-full">
         <h2 className="text-2xl font-bold mb-6">Agregar Nueva Columna</h2>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+        <form onSubmit={handleSubmit(onFormSubmit)} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Nombre de la columna
@@ -76,6 +99,24 @@ const AddColumnModal = ({ isOpen, onClose, onSubmit }) => {
               <p className="text-red-500 text-sm mt-1">{errors.type.message}</p>
             )}
           </div>
+
+          {/* Campo dinámico para SELECT */}
+          {selectedType === "SELECT" && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Opciones (separadas por coma)
+              </label>
+              <textarea
+                value={optionsInput}
+                onChange={(e) => setOptionsInput(e.target.value)}
+                placeholder="Ej: Ventas, Marketing, Soporte, Desarrollo"
+                className="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[80px]"
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                Estas opciones aparecerán en el selector de la columna.
+              </p>
+            </div>
+          )}
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">

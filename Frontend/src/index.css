@@ -10,3 +10,33 @@
 .birthday-event {
   @apply font-bold;
 }
+
+.cell-container {
+  position: relative;
+  padding: 0.5rem;
+  height: 100%;
+  display: flex;
+  align-items: center;
+}
+
+.cell-container:hover .edit-icon {
+  opacity: 0.6;
+}
+
+.edit-icon {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  opacity: 0;
+  transition: opacity 0.2s;
+  color: #6b7280;
+  cursor: pointer;
+}
+
+.cell-editing {
+  background-color: #f0f9ff; /* azul muy claro */
+  border: 2px solid #3b82f6;
+  border-radius: 4px;
+  padding: 2px 4px;
+}

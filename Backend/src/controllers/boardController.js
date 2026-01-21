@@ -136,9 +136,17 @@ const getBoardById = async (req, res) => {
 
     try {
         const board = await Board.findById(id)
-            .populate("createdBy", "name email")
-            .populate("invitedUsers", "name email")
-            .populate("workspaceId", "name");
+            .populate("createdBy", "name email avatar")
+            .populate("invitedUsers", "name email avatar")
+            .populate("workspaceId", "name")
+            .populate({
+                path: "items.createdBy",
+                select: "name email avatar",
+            })
+            .populate({
+                path: "items.updatedBy",
+                select: "name email avatar",
+            });
 
         if (!board) {
             return res.status(404).json({ success: false, message: "Board no encontrado" });
