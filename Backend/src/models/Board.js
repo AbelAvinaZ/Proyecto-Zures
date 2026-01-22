@@ -27,10 +27,7 @@ const baseColumnSchema = new mongoose.Schema({
         enum: columnTypes,
         required: true,
     },
-    order: {
-        type: Number,
-        required: true,
-    },
+    order: { type: Number, default: 0 },
     config: {
         type: mongoose.Schema.Types.Mixed,
         default: {},
@@ -74,6 +71,7 @@ const itemSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: "User",
     },
+    order: { type: Number, default: 0 },
 }, { timestamps: true });
 
 // Chart
@@ -132,7 +130,9 @@ const boardSchema = new mongoose.Schema({
     columns: [baseColumnSchema],
     items: [itemSchema],
     charts: [chartSchema],
-}, { timestamps: true });
+},
+    { versionKey: false },
+    { timestamps: true });
 
 boardSchema.index({ workspaceId: 1 });
 boardSchema.index({ createdBy: 1 });

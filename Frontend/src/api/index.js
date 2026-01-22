@@ -33,11 +33,14 @@ export const inviteToBoard = (id, userId) => api.post(`/boards/${id}/invite`, { 
 
 // Columnas
 export const addColumn = (boardId, data) => api.post(`/boards/${boardId}/columns`, data).then(res => res.data.data.board);
+export const reorderColumns = (boardId, orderedColumnIds) => api.patch(`/boards/${boardId}/reorder-columns`, { orderedColumnIds }).then(res => res.data.data.board);
 export const removeColumn = (boardId, columnIndex) => api.delete(`/boards/${boardId}/columns/${columnIndex}`).then(res => res.data.data.board);
 
 // Items
 export const createItem = (boardId, data) => api.post(`/boards/${boardId}/items`, data).then(res => res.data.data.item);
 export const updateItemCell = (boardId, itemIndex, columnIndex, value) => api.patch(`/boards/${boardId}/items/${itemIndex}/columns/${columnIndex}`, { value }).then(res => res.data.data.item);
+export const reorderItems = (boardId, orderedItemIds) => api.patch(`/boards/${boardId}/reorder-items`, { orderedItemIds }).then(res => res.data.data.board);
+export const deleteItem = (boardId, itemIndex) => api.delete(`/boards/${boardId}/items/${itemIndex}`).then(res => res.data.data.board);
 
 // Charts
 export const addChart = (boardId, data) => api.post(`/boards/${boardId}/charts`, data).then(res => res.data.data.board);

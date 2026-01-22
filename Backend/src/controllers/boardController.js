@@ -360,16 +360,20 @@ const removeColumn = async (req, res) => {
         }
 
         // chequear si hay items con datos en esa columna
-        const hasData = board.items.some(item => item.values.has(columnIndex.toString()));
-        if (hasData) {
-            return res.status(400).json({ success: false, message: "No se puede eliminar columna con datos" });
+        const hadData = board.items.some(item => item.values.has(columnIndex.toString()));
+        if (hadData) {
+            logger.info(`Columna con datos eliminada por ${currentUser.email} en board ${board.name}`);
         }
-
         board.columns.splice(columnIndex, 1);
 
         // Reordenar las columnas restantes
         board.columns.forEach((col, index) => {
             col.order = index + 1;
+        });
+
+        // limpiar explícitamente los valores de esa columna en todos los items
+        board.items.forEach(item => {
+            item.values.delete(columnIndex.toString());
         });
 
         await board.save();
@@ -414,6 +418,7 @@ const createItem = async (req, res) => {
             values,
             createdBy: currentUser._id,
             updatedBy: currentUser._id,
+            order: board.items.length + 1,
         };
 
         board.items.push(newItem);
@@ -577,6 +582,114 @@ const getColumnTypes = async (req, res) => {
     }
 };
 
+// Eliminar item (fila)
+const removeItem = async (req, res) => {
+    const { id, itemIndex } = req.params;
+    const currentUser = req.user;
+
+    try {
+        const board = await Board.findById(id);
+        if (!board) {
+            return res.status(404).json({ success: false, message: "Board no encontrado" });
+        }
+
+        const hasAccess =
+            currentUser.role === ROLES.MASTER ||
+            board.createdBy.toString() === currentUser._id.toString() ||
+            board.invitedUsers.some(u => u.toString() === currentUser._id.toString());
+
+        if (!hasAccess) {
+            return res.status(403).json({ success: false, message: "No tienes permiso para eliminar items" });
+        }
+
+        if (itemIndex < 0 || itemIndex >= board.items.length) {
+            return res.status(404).json({ success: false, message: "Item no encontrado" });
+        }
+
+        board.items.splice(itemIndex, 1);
+        await board.save();
+
+        logger.info(`Item eliminado por ${currentUser.email} en board ${board.name}`);
+
+        res.json({
+            success: true,
+            message: "Item eliminado correctamente",
+            data: { board },
+        });
+    } catch (error) {
+        logger.error("Error al eliminar item", error);
+        res.status(500).json({ success: false, message: "Error al eliminar item" });
+    }
+};
+
+// Reordenar columnas
+const reorderColumns = async (req, res) => {
+    const { id } = req.params;
+    const { orderedColumnIds } = req.body;
+    const currentUser = req.user;
+
+    try {
+        const board = await Board.findById(id);
+        if (!board) return res.status(404).json({ success: false, message: "Board no encontrado" });
+
+        if (currentUser.role !== ROLES.MASTER && board.createdBy.toString() !== currentUser._id.toString()) {
+            return res.status(403).json({ success: false, message: "No tienes permiso" });
+        }
+
+        // Mapear los nuevos órdenes
+        const columnMap = new Map(board.columns.map(col => [col._id.toString(), col]));
+        const updatedColumns = orderedColumnIds.map((colId, index) => {
+            const col = columnMap.get(colId);
+            if (!col) throw new Error("Columna no encontrada");
+            col.order = index + 1;
+            return col;
+        });
+
+        board.columns = updatedColumns;
+        await board.save();
+
+        res.json({ success: true, message: "Columnas reordenadas", data: { board } });
+    } catch (error) {
+        logger.error("Error reordenando columnas", error);
+        res.status(500).json({ success: false, message: "Error al reordenar" });
+    }
+};
+
+// Reordenar items (filas)
+const reorderItems = async (req, res) => {
+    const { id } = req.params;
+    const { orderedItemIds } = req.body;
+    const currentUser = req.user;
+
+    try {
+        const board = await Board.findById(id);
+        if (!board) return res.status(404).json({ success: false, message: "Board no encontrado" });
+
+        // Permiso
+        const hasAccess =
+            currentUser.role === ROLES.MASTER ||
+            board.createdBy.toString() === currentUser._id.toString() ||
+            board.invitedUsers.some(u => u.toString() === currentUser._id.toString());
+        if (!hasAccess) return res.status(403).json({ success: false, message: "No tienes permiso" });
+
+        const itemMap = new Map(board.items.map(item => [item._id.toString(), item]));
+        const updatedItems = orderedItemIds.map((itemId, index) => {
+            const item = itemMap.get(itemId);
+            if (!item) throw new Error("Item no encontrado");
+            item.order = index + 1;
+            return item;
+        });
+
+        board.items = updatedItems;
+        await board.save();
+
+        res.json({ success: true, message: "Filas reordenadas", data: { board } });
+    } catch (error) {
+        logger.error("Error reordenando items", error);
+        res.status(500).json({ success: false, message: "Error al reordenar" });
+    }
+};
+
 export default {
     createBoard,
     getBoardsByWorkspace,
@@ -591,4 +704,7 @@ export default {
     addChart,
     removeChart,
     getColumnTypes,
+    removeItem,
+    reorderColumns,
+    reorderItems,
 };

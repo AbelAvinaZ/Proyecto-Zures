@@ -19,10 +19,14 @@ router.patch("/:id/deactivate", authMiddleware.authenticate, boardController.dea
 router.post("/:id/invite", authMiddleware.authenticate, validate(boardValidation.inviteUserToBoardSchema), boardController.inviteUserToBoard);
 
 router.post("/:id/columns", authMiddleware.authenticate, boardController.addColumn);
+router.patch("/:id/reorder-columns", authMiddleware.authenticate, boardController.reorderColumns);
 router.delete("/:id/columns/:columnIndex", authMiddleware.authenticate, boardController.removeColumn);
 
 router.post("/:id/items", authMiddleware.authenticate, boardController.createItem);
 router.patch("/:id/items/:itemIndex/columns/:columnIndex", authMiddleware.authenticate, boardController.updateItemCell);
+router.patch("/:id/reorder-items", authMiddleware.authenticate, boardController.reorderItems);
+router.delete("/:id/items/:itemIndex", authMiddleware.authenticate, boardController.removeItem);
+
 
 router.post("/:id/charts", authMiddleware.authenticate, boardController.addChart);
 router.delete("/:id/charts/:chartIndex", authMiddleware.authenticate, boardController.removeChart);

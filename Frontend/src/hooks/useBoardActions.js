@@ -8,6 +8,9 @@ import {
     removeColumn,
     createItem,
     updateItemCell,
+    deleteItem,
+    reorderColumns,
+    reorderItems,
 } from '../api';
 
 const useCreateBoard = () => {
@@ -71,6 +74,14 @@ const useRemoveColumn = (boardId) => {
     });
 };
 
+const useReorderColumns = (boardId) => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: (orderedIds) => reorderColumns(boardId, orderedIds),
+        onSuccess: () => queryClient.invalidateQueries(['board', boardId]),
+    });
+};
+
 const useCreateItem = (boardId) => {
     const queryClient = useQueryClient();
     return useMutation({
@@ -92,6 +103,24 @@ const useUpdateItemCell = (boardId) => {
     });
 };
 
+const useReorderItems = (boardId) => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: (orderedIds) => reorderItems(boardId, orderedIds),
+        onSuccess: () => queryClient.invalidateQueries(['board', boardId]),
+    });
+};
+
+const useDeleteItem = (boardId) => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: (itemIndex) => deleteItem(boardId, itemIndex),
+        onSuccess: () => {
+            queryClient.invalidateQueries(['board', boardId]);
+        },
+    });
+};
+
 export default {
     useCreateBoard,
     useUpdateBoard,
@@ -101,4 +130,7 @@ export default {
     useRemoveColumn,
     useCreateItem,
     useUpdateItemCell,
+    useDeleteItem,
+    useReorderColumns,
+    useReorderItems,
 };
