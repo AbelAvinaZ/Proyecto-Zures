@@ -20,28 +20,30 @@ const SortableRow = ({ children, id, onDeleteRow }) => {
 
   return (
     <tr ref={setNodeRef} style={style} className="group">
-      {/* Celda con grip + botón eliminar (solo visible al hover) */}
-      <td className="w-16 text-center px-2 py-4 flex items-center gap-3">
-        {/* Grip siempre visible para arrastrar */}
-        <div
-          {...attributes}
-          {...listeners}
-          className="cursor-grab text-gray-400 hover:text-gray-600 select-none"
-        >
-          ⋮⋮
-        </div>
+      {/* ✅ Celda extra para acciones (AHORA ALINEADA porque hay TH equivalente) */}
+      <td className="w-16 px-4 py-4 align-middle">
+        <div className="flex items-center justify-center gap-3">
+          {/* Grip siempre visible para arrastrar */}
+          <div
+            {...attributes}
+            {...listeners}
+            className="cursor-grab text-gray-400 hover:text-gray-600 select-none"
+          >
+            ⋮⋮
+          </div>
 
-        {/* Botón × solo visible al hover sobre la fila */}
-        <button
-          onClick={(e) => {
-            e.stopPropagation(); // evita que active drag
-            onDeleteRow();
-          }}
-          className="opacity-0 group-hover:opacity-100 text-red-600 hover:text-red-800 font-bold text-lg transition-opacity"
-          title="Eliminar fila"
-        >
-          ×
-        </button>
+          {/* Botón × solo visible al hover sobre la fila */}
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onDeleteRow();
+            }}
+            className="opacity-0 group-hover:opacity-100 text-red-600 hover:text-red-800 font-bold text-lg transition-opacity"
+            title="Eliminar fila"
+          >
+            ×
+          </button>
+        </div>
       </td>
 
       {/* Resto de celdas */}

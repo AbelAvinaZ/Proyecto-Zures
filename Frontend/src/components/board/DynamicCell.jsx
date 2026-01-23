@@ -108,7 +108,7 @@ const DynamicCell = ({
     <div
       ref={containerRef}
       className={`relative h-full flex items-center px-2 cursor-pointer group min-h-10
-        ${isEditing ? "bg-blue-50 border-2 border-blue-400 rounded" : ""}`}
+        ${isEditing ? "bg-blue-50 " : ""}`}
       onClick={() =>
         column.id !== "updatedBy" && !isEditing && setIsEditing(true)
       }
@@ -119,7 +119,7 @@ const DynamicCell = ({
         isEditing={isEditing}
         onSave={(newValue) => {
           onSave(newValue);
-          setIsEditing(false); // Cerramos edición después de guardar
+          setIsEditing(false);
         }}
         onCancel={() => {
           onCancel();
