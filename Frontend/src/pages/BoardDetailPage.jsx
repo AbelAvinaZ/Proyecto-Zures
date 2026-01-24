@@ -36,8 +36,8 @@ const BoardDetailPage = () => {
     });
   };
 
-  const handleUpdateCell = (itemIndex, columnIndex, value) => {
-    updateCellMutation.mutate({ itemIndex, columnIndex, value });
+  const handleUpdateCell = (itemIndex, columnId, value) => {
+    updateCellMutation.mutate({ itemIndex, columnId, value });
   };
 
   const handleAddItem = (values) => {

@@ -5,34 +5,34 @@ import { format } from "date-fns";
 import { es } from "date-fns/locale";
 
 const DateCell = ({ value, isEditing, onSave, onCancel }) => {
-  const pickerRef = useRef(null);
+  const inputRef = useRef(null);
 
   const [editValue, setEditValue] = useState(value ? new Date(value) : null);
   const [prevEditing, setPrevEditing] = useState(isEditing);
 
-  // Reset solo al entrar en modo edición (durante render)
+  // Reset al entrar en modo edición
   if (isEditing && !prevEditing) {
     setEditValue(value ? new Date(value) : null);
     setPrevEditing(true);
   }
 
-  // Actualizamos bandera al salir de edición
   if (!isEditing && prevEditing) {
     setPrevEditing(false);
   }
 
   useEffect(() => {
-    if (isEditing && pickerRef.current) {
-      // Focus en el input del DatePicker
-      const input = pickerRef.current.querySelector("input");
-      if (input) input.focus();
+    if (isEditing && inputRef.current) {
+      inputRef.current.focus();
+      inputRef.current.select?.();
     }
   }, [isEditing]);
 
   const handleKeyDown = (e) => {
     if (e.key === "Enter") {
+      e.preventDefault();
       onSave(editValue ? editValue.toISOString() : null);
     } else if (e.key === "Escape") {
+      e.preventDefault();
       onCancel();
       setEditValue(value ? new Date(value) : null);
     }
@@ -51,7 +51,6 @@ const DateCell = ({ value, isEditing, onSave, onCancel }) => {
 
   return (
     <DatePicker
-      ref={pickerRef}
       selected={editValue}
       onChange={(date) => setEditValue(date)}
       dateFormat="dd/MM/yyyy"
@@ -62,6 +61,8 @@ const DateCell = ({ value, isEditing, onSave, onCancel }) => {
       popperClassName="z-50"
       onKeyDown={handleKeyDown}
       onCalendarClose={() => onSave(editValue ? editValue.toISOString() : null)}
+      customInputRef="input"
+      inputRef={inputRef}
     />
   );
 };

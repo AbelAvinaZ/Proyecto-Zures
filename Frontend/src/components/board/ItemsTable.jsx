@@ -36,23 +36,24 @@ const ItemsTable = ({ board, onUpdateCell }) => {
   const reorderColumnsMutation = useReorderColumns(board._id);
   const reorderItemsMutation = useReorderItems(board._id);
 
+
   const [editingCell, setEditingCell] = useState(null);
-  const [confirmDeleteRow, setConfirmDeleteRow] = useState(null);
-  const [confirmDeleteColumn, setConfirmDeleteColumn] = useState(null);
+  const [confirmDeleteRowId, setConfirmDeleteRowId] = useState(null);
+  const [confirmDeleteColumnId, setConfirmDeleteColumnId] = useState(null);
 
   const [columnOrder, setColumnOrder] = useState(
-    board.columns.map((c) => c._id.toString()),
+    (board.columns || []).map((c) => c._id.toString()),
   );
   const [rowOrder, setRowOrder] = useState(
-    board.items.map((i) => i._id.toString()),
+    (board.items || []).map((i) => i._id.toString()),
   );
 
   useEffect(() => {
-    setColumnOrder(board.columns.map((c) => c._id.toString()));
+    setColumnOrder((board.columns || []).map((c) => c._id.toString()));
   }, [board.columns]);
 
   useEffect(() => {
-    setRowOrder(board.items.map((i) => i._id.toString()));
+    setRowOrder((board.items || []).map((i) => i._id.toString()));
   }, [board.items]);
 
   const sensors = useSensors(
@@ -94,89 +95,95 @@ const ItemsTable = ({ board, onUpdateCell }) => {
     }
   };
 
-  const handleDeleteRow = (rowIndex) => {
-    setConfirmDeleteRow(rowIndex);
+  const handleDeleteRow = (itemId) => {
+    setConfirmDeleteRowId(itemId);
   };
 
   const executeDeleteRow = () => {
-    if (confirmDeleteRow === null) return;
-    deleteItemMutation.mutate(confirmDeleteRow);
-    setConfirmDeleteRow(null);
+    if (!confirmDeleteRowId) return;
+    deleteItemMutation.mutate(confirmDeleteRowId);
+    setConfirmDeleteRowId(null);
   };
 
-  const handleDeleteColumn = (columnIndex) => {
-    setConfirmDeleteColumn(columnIndex);
+  const handleDeleteColumn = (columnId) => {
+    setConfirmDeleteColumnId(columnId);
   };
 
   const executeDeleteColumn = () => {
-    if (confirmDeleteColumn === null) return;
-    removeColumnMutation.mutate(confirmDeleteColumn);
-    setConfirmDeleteColumn(null);
+    if (!confirmDeleteColumnId) return;
+    removeColumnMutation.mutate(confirmDeleteColumnId);
+    setConfirmDeleteColumnId(null);
   };
 
-  // Columnas dinámicas (respeta columnOrder)
+  // Columnas dinámicas, ordenadas por columnOrder.
   const dynamicColumns = useMemo(() => {
-    const map = new Map(board.columns.map((c) => [c._id.toString(), c]));
-    const ordered = columnOrder.map((id) => map.get(id)).filter(Boolean);
+    const columnMap = new Map(
+      (board.columns || []).map((c) => [c._id.toString(), c]),
+    );
 
-    return ordered.map((col) => ({
-      id: col._id.toString(),
-      header: () => (
-        <SortableHeader
-          id={col._id.toString()}
-          title={col.name}
-          onDelete={() =>
-            handleDeleteColumn(
-              board.columns.findIndex(
-                (c) => c._id.toString() === col._id.toString(),
-              ),
-            )
-          }
-        />
-      ),
-      cell: ({ row, getValue }) => {
-        const itemIndex = row.index;
-        const columnIndex = board.columns.findIndex(
-          (c) => c._id.toString() === col._id.toString(),
-        );
-        const value = getValue();
+    const orderedColumns = (columnOrder || [])
+      .map((id) => columnMap.get(id))
+      .filter(Boolean);
 
-        const isThisCellEditing =
-          editingCell?.rowIndex === itemIndex &&
-          editingCell?.colIndex === columnIndex;
+    return orderedColumns.map((col) => {
+      const colId = col._id.toString();
 
-        return (
-          <DynamicCell
-            value={value}
-            column={col}
-            isEditing={isThisCellEditing}
-            setIsEditing={(val) => {
-              if (val) {
-                setEditingCell({
-                  rowIndex: itemIndex,
-                  colIndex: columnIndex,
-                });
-              } else {
-                setEditingCell(null);
-              }
-            }}
-            onSave={(newValue) => {
-              if (newValue !== value) {
-                onUpdateCell(itemIndex, columnIndex, newValue);
-              }
-              setEditingCell(null);
-            }}
-            onCancel={() => setEditingCell(null)}
-            boardId={board._id}
-            columnIndex={columnIndex}
-            rowIndex={itemIndex}
-            board={board}
+      return {
+        id: colId,
+
+        // ✅ Tanstack: sin accessorFn getValue() es undefined
+        accessorFn: (row) => {
+          const values = row?.values;
+          if (!values) return null;
+
+          if (values instanceof Map) return values.get(colId) ?? null;
+          return values[colId] ?? null;
+        },
+
+        header: () => (
+          <SortableHeader
+            id={colId}
+            title={col.name}
+            // ✅ pasa columnId, NO index
+            onDelete={() => handleDeleteColumn(colId)}
           />
-        );
-      },
-    }));
-  }, [board.columns, columnOrder, onUpdateCell, editingCell]);
+        ),
 
+        cell: ({ row, getValue }) => {
+          const itemIndex = row.index;
+          const value = getValue();
+
+          const isThisCellEditing =
+            editingCell?.rowIndex === itemIndex && editingCell?.colId === colId;
+
+          return (
+            <DynamicCell
+              value={value}
+              column={col}
+              isEditing={isThisCellEditing}
+              setIsEditing={(val) => {
+                if (val) setEditingCell({ rowIndex: itemIndex, colId });
+                else setEditingCell(null);
+              }}
+              onSave={(newValue) => {
+                if (newValue !== value) {
+                  onUpdateCell(itemIndex, colId, newValue);
+                }
+                setEditingCell(null);
+              }}
+              onCancel={() => setEditingCell(null)}
+              boardId={board._id}
+              columnId={colId}
+              rowIndex={itemIndex}
+              board={board}
+            />
+          );
+        },
+      };
+    });
+  }, [board.columns, board._id, columnOrder, editingCell, onUpdateCell]);
+
+  // Columna fija "Actualizado por" (no editable)
   const fixedColumn = useMemo(
     () => ({
       id: "updatedBy",
@@ -222,8 +229,9 @@ const ItemsTable = ({ board, onUpdateCell }) => {
     [dynamicColumns, fixedColumn],
   );
 
+  // Ordenar filas por rowOrder
   const sortedData = useMemo(() => {
-    const orderMap = new Map(rowOrder.map((id, idx) => [id, idx]));
+    const orderMap = new Map((rowOrder || []).map((id, idx) => [id, idx]));
     return [...(board.items || [])].sort(
       (a, b) =>
         (orderMap.get(a._id.toString()) ?? Infinity) -
@@ -245,18 +253,16 @@ const ItemsTable = ({ board, onUpdateCell }) => {
         collisionDetection={closestCenter}
         onDragEnd={handleColumnDragEnd}
       >
-        {/* Solo columnas dinámicas son reorderables */}
         <SortableContext
           items={columnOrder}
           strategy={horizontalListSortingStrategy}
         >
           <div className="overflow-x-auto border rounded-lg">
-            {/* table-fixed ayuda muchísimo a mantener alineación */}
             <table className="min-w-full table-fixed divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 {table.getHeaderGroups().map((headerGroup) => (
                   <tr key={headerGroup.id}>
- 
+                    {/* Columna de acciones (grip + delete row) */}
                     <th className="w-16 px-4 py-3" />
 
                     {headerGroup.headers.map((header) => (
@@ -293,7 +299,9 @@ const ItemsTable = ({ board, onUpdateCell }) => {
                       <SortableRow
                         key={row.id}
                         id={row.original._id.toString()}
-                        onDeleteRow={() => handleDeleteRow(row.index)}
+                        onDeleteRow={() =>
+                          handleDeleteRow(row.original._id.toString())
+                        }
                       >
                         {row.getVisibleCells().map((cell) => (
                           <td
@@ -321,9 +329,10 @@ const ItemsTable = ({ board, onUpdateCell }) => {
         </SortableContext>
       </DndContext>
 
+      {/* Modales */}
       <ConfirmModal
-        isOpen={confirmDeleteRow !== null}
-        onClose={() => setConfirmDeleteRow(null)}
+        isOpen={confirmDeleteRowId !== null}
+        onClose={() => setConfirmDeleteRowId(null)}
         onConfirm={executeDeleteRow}
         title="Eliminar fila"
         message="¿Estás seguro de que deseas eliminar esta fila? Se perderán todos los datos de esta fila. Esta acción no se puede deshacer."
@@ -332,8 +341,8 @@ const ItemsTable = ({ board, onUpdateCell }) => {
       />
 
       <ConfirmModal
-        isOpen={confirmDeleteColumn !== null}
-        onClose={() => setConfirmDeleteColumn(null)}
+        isOpen={confirmDeleteColumnId !== null}
+        onClose={() => setConfirmDeleteColumnId(null)}
         onConfirm={executeDeleteColumn}
         title="Eliminar columna"
         message="¿Estás seguro de que deseas eliminar esta columna? Se perderán todos los datos que contiene en todas las filas. Esta acción no se puede deshacer."

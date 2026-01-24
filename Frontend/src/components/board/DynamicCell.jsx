@@ -46,7 +46,7 @@ const DynamicCell = ({
   isEditing,
   setIsEditing,
   boardId,
-  columnIndex,
+  columnId,
   rowIndex,
   board,
 }) => {
@@ -126,7 +126,7 @@ const DynamicCell = ({
           setIsEditing(false);
         }}
         boardId={boardId}
-        columnIndex={columnIndex}
+        columnId={columnId}
         rowIndex={rowIndex}
         board={board}
       />

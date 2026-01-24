@@ -342,7 +342,7 @@ const addColumn = async (req, res) => {
 
 // Eliminar columna
 const removeColumn = async (req, res) => {
-    const { id, columnIndex } = req.params;
+    const { id, columnId } = req.params;
     const currentUser = req.user;
 
     try {
@@ -355,30 +355,20 @@ const removeColumn = async (req, res) => {
             return res.status(403).json({ success: false, message: "Solo el creador o MASTER puede eliminar columnas" });
         }
 
-        if (columnIndex < 0 || columnIndex >= board.columns.length) {
+        const idx = board.columns.findIndex((c) => c._id.toString() === columnId);
+        if (idx === -1) {
             return res.status(404).json({ success: false, message: "Columna no encontrada" });
         }
 
-        // chequear si hay items con datos en esa columna
-        const hadData = board.items.some(item => item.values.has(columnIndex.toString()));
-        if (hadData) {
-            logger.info(`Columna con datos eliminada por ${currentUser.email} en board ${board.name}`);
-        }
-        board.columns.splice(columnIndex, 1);
+        board.columns.splice(idx, 1);
 
-        // Reordenar las columnas restantes
-        board.columns.forEach((col, index) => {
-            col.order = index + 1;
-        });
+        board.columns.forEach((col, i) => (col.order = i + 1));
 
-        // limpiar explícitamente los valores de esa columna en todos los items
-        board.items.forEach(item => {
-            item.values.delete(columnIndex.toString());
+        board.items.forEach((item) => {
+            item.values?.delete(columnId.toString());
         });
 
         await board.save();
-
-        logger.info(`Columna eliminada por ${currentUser.email} en board ${board.name}`);
 
         res.json({
             success: true,
@@ -439,7 +429,7 @@ const createItem = async (req, res) => {
 
 // Actualizar valor de una celda específica
 const updateItemCell = async (req, res) => {
-    const { id, itemIndex, columnIndex } = req.params;
+    const { id, itemIndex, columnId } = req.params;
     const { value } = req.body;
     const currentUser = req.user;
 
@@ -453,7 +443,7 @@ const updateItemCell = async (req, res) => {
             currentUser.role === ROLES.MASTER ||
             currentUser.role === ROLES.AREA_DIRECTOR ||
             board.createdBy.toString() === currentUser._id.toString() ||
-            board.invitedUsers.some(u => u.toString() === currentUser._id.toString()) ||
+            board.invitedUsers.some((u) => u.toString() === currentUser._id.toString()) ||
             !board.isPrivate;
 
         if (!hasAccess) {
@@ -464,16 +454,17 @@ const updateItemCell = async (req, res) => {
             return res.status(404).json({ success: false, message: "Item no encontrado" });
         }
 
-        if (columnIndex < 0 || columnIndex >= board.columns.length) {
+        const colExists = board.columns.some((c) => c._id.toString() === columnId);
+        if (!colExists) {
             return res.status(404).json({ success: false, message: "Columna no encontrada" });
         }
 
         const item = board.items[itemIndex];
-        item.values.set(columnIndex.toString(), value);
+
+        item.values.set(columnId.toString(), value);
+
         item.updatedBy = currentUser._id;
         await board.save();
-
-        logger.info(`Celda actualizada por ${currentUser.email} en board ${board.name}`);
 
         res.json({
             success: true,
@@ -584,7 +575,7 @@ const getColumnTypes = async (req, res) => {
 
 // Eliminar item (fila)
 const removeItem = async (req, res) => {
-    const { id, itemIndex } = req.params;
+    const { id, itemId } = req.params;
     const currentUser = req.user;
 
     try {
@@ -596,20 +587,19 @@ const removeItem = async (req, res) => {
         const hasAccess =
             currentUser.role === ROLES.MASTER ||
             board.createdBy.toString() === currentUser._id.toString() ||
-            board.invitedUsers.some(u => u.toString() === currentUser._id.toString());
+            board.invitedUsers.some((u) => u.toString() === currentUser._id.toString());
 
         if (!hasAccess) {
             return res.status(403).json({ success: false, message: "No tienes permiso para eliminar items" });
         }
 
-        if (itemIndex < 0 || itemIndex >= board.items.length) {
+        const idx = board.items.findIndex((it) => it._id.toString() === itemId);
+        if (idx === -1) {
             return res.status(404).json({ success: false, message: "Item no encontrado" });
         }
 
-        board.items.splice(itemIndex, 1);
+        board.items.splice(idx, 1);
         await board.save();
-
-        logger.info(`Item eliminado por ${currentUser.email} en board ${board.name}`);
 
         res.json({
             success: true,

@@ -22,10 +22,8 @@ const useAddColumn = (boardId) => {
 const useRemoveColumn = (boardId) => {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: (columnIndex) => removeColumn(boardId, columnIndex),
-        onSuccess: () => {
-            queryClient.invalidateQueries(['board', boardId]);
-        },
+        mutationFn: (columnId) => removeColumn(boardId, columnId),
+        onSuccess: () => queryClient.invalidateQueries(['board', boardId]),
     });
 };
 
@@ -42,7 +40,7 @@ const useCreateItem = (boardId) => {
 const useUpdateItemCell = (boardId) => {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: ({ itemIndex, columnIndex, value }) => updateItemCell(boardId, itemIndex, columnIndex, value),
+        mutationFn: ({ itemIndex, columnId, value }) => updateItemCell(boardId, itemIndex, columnId, value),
         onSuccess: () => {
             queryClient.invalidateQueries(['board', boardId]);
         },
