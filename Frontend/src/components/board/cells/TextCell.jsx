@@ -21,21 +21,13 @@ const TextCell = ({ value, isEditing, onSave, onCancel }) => {
     }
   }, [isEditing]);
 
-  const handleKeyDown = (e) => {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      onSave(editValue);
-    } else if (e.key === "Escape") {
-      onCancel();
-      setEditValue(value ?? "");
-    }
-  };
-
   if (!isEditing) {
     return (
-      <div className="w-full h-full flex items-center px-1">
+      <div className="w-full max-w-full">
         {value != null && value !== "" ? (
-          value
+          <div className="w-full h-full mx-5 py-2 text-md whitespace-pre-wrap wrap-break-word text-left leading-relaxed">
+            {value || <span className="text-gray-400 italic">-</span>}
+          </div>
         ) : (
           <span className="text-gray-400">-</span>
         )}
@@ -44,15 +36,25 @@ const TextCell = ({ value, isEditing, onSave, onCancel }) => {
   }
 
   return (
-    <input
+    <textarea
       ref={inputRef}
-      type="text"
       value={editValue}
       onChange={(e) => setEditValue(e.target.value)}
-      onKeyDown={handleKeyDown}
+      onKeyDown={(e) => {
+        if (e.key === "Escape") {
+          onCancel();
+          setEditValue(value ?? "");
+        }
+
+        if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
+          e.preventDefault();
+          onSave(editValue);
+        }
+      }}
       onBlur={() => onSave(editValue)}
-      className="w-full px-2 py-1 border border-blue-500 rounded focus:outline-none focus:ring-2 focus:ring-blue-400"
-      placeholder="Escribe aquí..."
+      rows={5}
+      className="w-full min-h-40 resize-y py-3 border border-blue-500 rounded focus:outline-none focus:ring-2 focus:ring-blue-400"
+      placeholder="Escribe aquí... (Ctrl+Enter para guardar)"
     />
   );
 };

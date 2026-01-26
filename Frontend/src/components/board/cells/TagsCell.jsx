@@ -102,11 +102,11 @@ const TagsCell = ({
     if (tags.length === 0) return <span className="text-gray-400">-</span>;
 
     return (
-      <div className="flex flex-wrap gap-1">
+      <div className="flex flex-wrap justify-center gap-1 max-w-full">
         {tags.map((tag, i) => (
           <span
             key={`${tag.value}-${i}`}
-            className="px-2 py-1 rounded-full text-sm text-white"
+            className="px-2 py-1 rounded-full text-sm text-white max-w-full wrap-break-word text-center"
             style={{ backgroundColor: tag.color || "#6b7280" }}
           >
             {tag.label}

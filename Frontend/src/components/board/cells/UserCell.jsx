@@ -37,7 +37,7 @@ const UserCell = ({ value, isEditing, onSave, onCancel }) => {
     }
 
     return (
-      <div className="flex flex-wrap gap-1">
+      <div className="flex flex-wrap justify-center gap-1 max-w-full">
         {value.map((userId) => {
           const user = usersOptions.find((u) => u.value === userId);
           if (!user) return <span key={userId}>{userId}</span>;
@@ -45,14 +45,14 @@ const UserCell = ({ value, isEditing, onSave, onCancel }) => {
           return (
             <div
               key={userId}
-              className="flex items-center gap-1 bg-gray-100 px-2 py-1 rounded-full text-sm"
+              className="flex items-center gap-1 bg-gray-100 px-2 py-1 rounded-full text-sm max-w-full"
             >
               <img
                 src={user.avatar}
                 alt={user.label}
                 className="w-5 h-5 rounded-full object-cover"
               />
-              <span>{user.label}</span>
+              <span className="wrap-break-word text-center">{user.label}</span>
             </div>
           );
         })}

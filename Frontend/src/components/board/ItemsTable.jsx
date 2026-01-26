@@ -36,7 +36,6 @@ const ItemsTable = ({ board, onUpdateCell }) => {
   const reorderColumnsMutation = useReorderColumns(board._id);
   const reorderItemsMutation = useReorderItems(board._id);
 
-
   const [editingCell, setEditingCell] = useState(null);
   const [confirmDeleteRowId, setConfirmDeleteRowId] = useState(null);
   const [confirmDeleteColumnId, setConfirmDeleteColumnId] = useState(null);
@@ -130,6 +129,8 @@ const ItemsTable = ({ board, onUpdateCell }) => {
 
       return {
         id: colId,
+        size: col.type === "TEXT" ? 350 : 180, 
+        minSize: col.type === "TEXT" ? 250 : 150,
 
         // ✅ Tanstack: sin accessorFn getValue() es undefined
         accessorFn: (row) => {
@@ -144,7 +145,6 @@ const ItemsTable = ({ board, onUpdateCell }) => {
           <SortableHeader
             id={colId}
             title={col.name}
-            // ✅ pasa columnId, NO index
             onDelete={() => handleDeleteColumn(colId)}
           />
         ),
@@ -258,7 +258,7 @@ const ItemsTable = ({ board, onUpdateCell }) => {
           strategy={horizontalListSortingStrategy}
         >
           <div className="overflow-x-auto border rounded-lg">
-            <table className="min-w-full table-fixed divide-y divide-gray-200">
+            <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 {table.getHeaderGroups().map((headerGroup) => (
                   <tr key={headerGroup.id}>
@@ -268,7 +268,7 @@ const ItemsTable = ({ board, onUpdateCell }) => {
                     {headerGroup.headers.map((header) => (
                       <th
                         key={header.id}
-                        className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider align-middle"
+                        className="px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider align-middle"
                         style={{
                           width: header.column.columnDef.size
                             ? `${header.column.columnDef.size}px`
@@ -306,7 +306,7 @@ const ItemsTable = ({ board, onUpdateCell }) => {
                         {row.getVisibleCells().map((cell) => (
                           <td
                             key={cell.id}
-                            className="px-4 py-4 whitespace-nowrap align-middle"
+                            className=" py-4 whitespace-normal wrap-break-word align-middle"
                             style={{
                               width: cell.column.columnDef.size
                                 ? `${cell.column.columnDef.size}px`

@@ -107,29 +107,30 @@ const DynamicCell = ({
   return (
     <div
       ref={containerRef}
-      className={`relative h-full flex items-center px-2 cursor-pointer group min-h-10
-        ${isEditing ? "bg-blue-50 " : ""}`}
+      className={`relative h-full w-full flex items-stretch px-2 cursor-pointer group min-h-16 ${isEditing ? "bg-blue-50 " : ""}`}
       onClick={() =>
         column.id !== "updatedBy" && !isEditing && setIsEditing(true)
       }
     >
-      <CellComponent
-        value={value}
-        column={column}
-        isEditing={isEditing}
-        onSave={(newValue) => {
-          onSave(newValue);
-          setIsEditing(false);
-        }}
-        onCancel={() => {
-          onCancel();
-          setIsEditing(false);
-        }}
-        boardId={boardId}
-        columnId={columnId}
-        rowIndex={rowIndex}
-        board={board}
-      />
+      <div className="w-full flex-1 flex items-center px-3">
+        <CellComponent
+          value={value}
+          column={column}
+          isEditing={isEditing}
+          onSave={(newValue) => {
+            onSave(newValue);
+            setIsEditing(false);
+          }}
+          onCancel={() => {
+            onCancel();
+            setIsEditing(false);
+          }}
+          boardId={boardId}
+          columnId={columnId}
+          rowIndex={rowIndex}
+          board={board}
+        />
+      </div>
 
       {/* Icono de lápiz solo si no es fórmula ni updatedBy */}
       {!isEditing && column.type !== "FORMULA" && column.id !== "updatedBy" && (
